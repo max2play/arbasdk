@@ -93,7 +93,25 @@ class Arbalet(object):
                 self.arbaclient = Arbaclient(self, server[0])
             else:
                 raise ValueError('Incorrect server address, use ip:port or ip')
-
+    
+    # Max2Play: Reinit Table Hardware
+    def reinit_hardware(self):        
+        self.events = Events(self, True)
+        
+        if self._hardware:
+            i = 0
+            while self.arbalink.is_connected == False and i < 3:
+                self.arbalink = Arbalink.factory(self)
+                i += 1
+        if len(self._server)>0:
+            server = self._server.split(':')
+            if len(server)==2:
+                self.arbaclient = Arbaclient(self, server[0], int(server[1]))
+            elif len(server)==1:
+                self.arbaclient = Arbaclient(self, server[0])
+            else:
+                raise ValueError('Incorrect server address, use ip:port or ip')
+    
     @property
     def end_model(self):
         # The final model is the addition of all models of each layer

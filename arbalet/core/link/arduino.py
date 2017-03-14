@@ -23,7 +23,9 @@ class ArduinoLink(AbstractLink):
     CMD_CLIENT_INIT_SUCCESS = b'S'
     CMD_CLIENT_INIT_FAILURE = b'F'
     PROTOCOL_VERSION = 2
-    
+    SKIPONE = 0
+    DEFAULTKEYS = [0,0,0,0,0,0,0,0,0,0,0,0,0]
+
     def __init__(self, arbalet, diminution=1):
         super(ArduinoLink, self).__init__(arbalet, diminution)
         self._current_device = 0
@@ -65,26 +67,42 @@ class ArduinoLink(AbstractLink):
         return ord(self.read_char())
 
     def write_uint8(self, i):
-        self._serial.write(pack('<B', i))
+	self._serial.write(pack('<B', i))
 
     def read_char(self):
         try:
-            return unpack('<c', self._serial.read())[0]
+            test = unpack('<c', self._serial.read());
+ 	    #print("Read_char")
+	    #print(test)
+	    return test[0]
         except error:
             self._connected = False
             return '\0'
 
     def write_char(self, c):
-        self._serial.write(pack('<c', bytes(c)))
+        #print("write char")
+	self._serial.write(pack('<c', bytes(c)))
 
     def read_short(self):
         try:
-            return unpack('<H', self._serial.read(2))[0]
+            if self.SKIPONE == 1:
+	        test = [1001]
+		self.SKIPONE = 0
+	    else:
+	        test = unpack('<H', self._serial.read(2));
+	    #print(test[0])
+	    if test[0] > 17000 and test[0] < 60000:
+		test = [1001]
+		#print("Error - 1 Byte sent wrong, corrected")
+		self._serial.read(1);
+		self.SKIPONE = 1
+	    return test[0]
         except error:
             self._connected = False
             return 0
 
     def write_short(self, s):
+	#print("write short")
         self._serial.write(pack('<H', s))
 
     def handshake(self):
@@ -125,11 +143,20 @@ class ArduinoLink(AbstractLink):
     def read_touch_frame(self):
         try:
             touch_int = self.read_short()
+            #print(touch_int)
             num_keys = self._arbalet.config['touch']['num_keys']
             keys = []
+	    counter = 0
             for key in range(num_keys):
-                key_state = self.read_short()
-                keys.append(key_state)
+                # FIX HERE BYTETRANSFER Problem
+		key_state = self.read_short()
+                if key_state > 1000 and key_state < 60000:
+		    keys.append(self.DEFAULTKEYS[counter])
+		else:
+		    keys.append(key_state)
+		    self.DEFAULTKEYS[counter] = key_state
+		counter +=1
+	    #print(keys)
         except (IOError, SerialException,) as e:
             self._serial.close()
             self._connected = False
@@ -143,9 +170,12 @@ class ArduinoLink(AbstractLink):
             commands = [self.CMD_BUFFER_READY, self.CMD_BUFFER_READY_DATA_FOLLOWS]
             if ready in commands:
                 frame = self.get_serial_frame(end_model)
-                self._serial.write(frame)
+                #print(frame)
+		self._serial.write(frame)
             elif len(ready)>0:
-                raise ValueError("Expected one command of {}, got {}".format(commands, ready))
+                #raise ValueError("Expected one command of {}, got {}".format(commands, ready))
+		ready = '';
+		print("skip value error")
         except (IOError, SerialException, ) as e:
             self._serial.close()
             self._connected = False
