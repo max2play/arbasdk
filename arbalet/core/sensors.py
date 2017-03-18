@@ -16,7 +16,7 @@ from collections import deque
 __all__ = ['CapacitiveTouch']
 
 class CapacitiveTouch(object):
-    modes = ['off', 'bidirectional', 'tridirectional', 'quadridirectional', 'columns', 'individual']
+    modes = ['off', 'bidirectional', 'tridirectional', 'quadridirectional', 'columns', 'individual', 'audioplayercontrol']
     def __init__(self, config, height, width, touch_mode='off'):
         with open(config) as f:
             self._config = load(f)
