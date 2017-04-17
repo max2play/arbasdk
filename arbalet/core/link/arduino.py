@@ -42,7 +42,12 @@ class ArduinoLink(AbstractLink):
         self.start()
 
     def connect(self):
+        print("Arduino: Starting Connect")
+        if self.is_connected():
+            print("Arduino: TEST - keep intact connection...")
+            return True
         if self._serial:
+            print("Arduino: Closing former connection")
             self._serial.close()
         device = self._arbalet.config['devices'][self._platform][self._current_device]
         try:
@@ -55,7 +60,7 @@ class ArduinoLink(AbstractLink):
         else:
             try:
                 self.handshake()
-            except (IOError, SerialException, OSError) as e:
+            except (IOError, SerialException, OSError, ValueError) as e:
                 print("[Arbalink] Handshake failure: {}".format(str(e)), file=stderr)
                 return False
             return True

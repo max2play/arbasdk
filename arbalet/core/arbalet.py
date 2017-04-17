@@ -82,7 +82,7 @@ class Arbalet(object):
         if self._simulation:
             self.arbasim = Simulator(self, self.height*factor_sim, self.width*factor_sim)
 
-        if self._hardware:
+        if self._hardware and len(self._server) == 0:
             self.arbalink = Arbalink.factory(self)
 
         if len(self._server)>0:
@@ -94,11 +94,19 @@ class Arbalet(object):
             else:
                 raise ValueError('Incorrect server address, use ip:port or ip')
     
+    
+    def free_connection(self):
+        if not self.arbalink is None:
+            self.arbalink.close()
+        if not self.arbaclient is None:
+            self.arbaclient.close()
+        self.events.close()
+    
     # Max2Play: Reinit Table Hardware
-    def reinit_hardware(self):        
+    def reinit_connection(self):
         self.events = Events(self, True)
         
-        if self._hardware:
+        if self._hardware and len(self._server) == 0:
             i = 0
             while self.arbalink.is_connected == False and i < 3:
                 self.arbalink = Arbalink.factory(self)
