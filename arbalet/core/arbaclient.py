@@ -43,7 +43,9 @@ class Arbaclient(Thread):
         touch_frame = self.sender.recv_json()
         touch_int = touch_frame[0]
         touch_booleans = touch_frame[1]
-        self.arbalet.touch.create_event(touch_int, touch_booleans)
+        if self.arbalet.touch.create_event(touch_int, touch_booleans) == False:
+            return False
+        return True
 
     def close(self, reason='unknown'):
         self.running = False
@@ -52,6 +54,8 @@ class Arbaclient(Thread):
         self.connect()
         while self.running:
             self.send_model()
-            self.receive_touch()
+            if self.receive_touch() == False:
+                print("Arbaclient Closed due to Touch Error")
+                self.running = False                
             self.rate.sleep()
         self.sender.close()

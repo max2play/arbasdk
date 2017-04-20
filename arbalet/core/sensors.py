@@ -97,8 +97,14 @@ class CapacitiveTouch(object):
                 self._windowed_touch_values.append(keys)
                 if len(self._windowed_touch_values) > self._config['touch']['window_size']:
                     self._windowed_touch_values.popleft()
-                    windowed_mean = mean(array(self._windowed_touch_values), axis=0)
-
+                    # Add Try /Catch with some debuuging as windowed_touch_values has TypeError: cannot perform reduce with flexible type after 30 min
+                    try:
+                        windowed_mean = mean(array(self._windowed_touch_values), axis=0)
+                    except TypeError as e:
+                        print("Bad Values for TouchInput {} Error: {}".format(str(self._windowed_touch_values),str(e)))
+                        touch = self._touch_int
+                        keys = self._touch_keys_values
+                        return False
                     if len(self._calibrated_low_levels) == 0:
                         # If uncalibrated
                         self._calibrated_low_levels = windowed_mean
